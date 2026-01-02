@@ -1,0 +1,204 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  passwordHash     String    @map("password_hash")
+  name             String
+  avatarUrl        String?   @map("avatar_url")
+  isPremium        Boolean   @default(false) @map("is_premium")
+  premiumExpiresAt DateTime? @map("premium_expires_at")
+  emailVerified    Boolean   @default(false) @map("email_verified")
+  verificationToken String?  @map("verification_token")
+  resetPasswordToken String? @map("reset_password_token")
+  resetPasswordExpires DateTime? @map("reset_password_expires")
+  
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  lastLoginAt      DateTime? @map("last_login_at")
+  
+  settings         Json      @default("{}")
+  
+  entries          Entry[]
+  tags             Tag[]
+  subscriptions    Subscription[]
+  activityLogs     ActivityLog[]
+  refreshTokens    RefreshToken[]
+  deviceTokens     DeviceToken[]
+  
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+enum EntryType {
+  WRITTEN
+  VIDEO
+}
+
+enum EntryPrivacy {
+  PRIVATE
+  PUBLIC
+}
+
+model Entry {
+  id              String        @id @default(uuid())
+  userId          String        @map("user_id")
+  type            EntryType
+  title           String
+  content         String?       @db.Text
+  videoUrl        String?       @map("video_url")
+  videoThumbnail  String?       @map("video_thumbnail")
+  videoDuration   Int?          @map("video_duration")
+  mood            String?
+  privacy         EntryPrivacy  @default(PRIVATE)
+  location        String?
+  locationCoords  Json?         @map("location_coords")
+  wordCount       Int?          @map("word_count")
+  viewCount       Int           @default(0) @map("view_count")
+  likeCount       Int           @default(0) @map("like_count")
+  
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  deletedAt       DateTime?     @map("deleted_at")
+  
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags            EntryTag[]
+  images          EntryImage[]
+  sharedEntries   SharedEntry[]
+  
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@index([privacy])
+  @@index([type])
+  @@map("entries")
+}
+
+model Tag {
+  id        String     @id @default(uuid())
+  userId    String     @map("user_id")
+  name      String
+  createdAt DateTime   @default(now()) @map("created_at")
+  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries   EntryTag[]
+  
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tags")
+}
+
+model EntryTag {
+  entryId   String @map("entry_id")
+  tagId     String @map("tag_id")
+  
+  entry     Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  tag       Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([entryId, tagId])
+  @@map("entry_tags")
+}
+
+model EntryImage {
+  id         String   @id @default(uuid())
+  entryId    String   @map("entry_id")
+  imageUrl   String   @map("image_url")
+  orderIndex Int      @map("order_index")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  entry      Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  
+  @@index([entryId])
+  @@map("entry_images")
+}
+
+model SharedEntry {
+  id         String    @id @default(uuid())
+  entryId    String    @map("entry_id")
+  shareToken String    @unique @map("share_token")
+  viewCount  Int       @default(0) @map("view_count")
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  
+  entry      Entry     @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  
+  @@index([shareToken])
+  @@map("shared_entries")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  UNPAID
+  INCOMPLETE
+}
+
+model Subscription {
+  id                    String             @id @default(uuid())
+  userId                String             @map("user_id")
+  stripeSubscriptionId  String?            @unique @map("stripe_subscription_id")
+  stripeCustomerId      String?            @map("stripe_customer_id")
+  status                SubscriptionStatus
+  planId                String             @map("plan_id")
+  currentPeriodStart    DateTime?          @map("current_period_start")
+  currentPeriodEnd      DateTime?          @map("current_period_end")
+  cancelAtPeriodEnd     Boolean            @default(false) @map("cancel_at_period_end")
+  
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String
+  metadata  Json?
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("activity_logs")
+}
+
+model DeviceToken {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  deviceInfo Json?    @map("device_info")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("device_tokens")
+}
