@@ -1,39 +1,36 @@
-// src/services/authService.ts
+// frontend/src/services/authService.js
 import api from './api';
 
-export interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface LoginData {
-  email: string;
-  password: string;
-}
-
 export const authService = {
-  async register(data: RegisterData) {
+  async register(data) {
     const response = await api.post('/auth/register', data);
     return response.data;
   },
 
-  async login(data: LoginData) {
+  async login(data) {
     const response = await api.post('/auth/login', data);
-    if (response.data.data.accessToken) {
+    
+    // Check if the response has the data we expect before saving
+    if (response.data && response.data.data && response.data.data.accessToken) {
       localStorage.setItem('accessToken', response.data.data.accessToken);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      // This matches the key used in your App.js
+      localStorage.setItem('currentUser', JSON.stringify(response.data.data.user));
     }
     return response.data;
   },
 
   async logout() {
-    await api.post('/auth/logout');
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error("Logout error", error);
+    }
+    // Cleanup local storage using the correct keys
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    localStorage.removeItem('currentUser'); 
   },
 
-  async verifyEmail(token: string) {
+  async verifyEmail(token) {
     const response = await api.get(`/auth/verify-email/${token}`);
     return response.data;
   },
@@ -44,7 +41,7 @@ export const authService = {
   },
 
   getCurrentUser() {
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem('currentUser');
     return userStr ? JSON.parse(userStr) : null;
   },
 
@@ -52,4 +49,3 @@ export const authService = {
     return !!localStorage.getItem('accessToken');
   }
 };
-

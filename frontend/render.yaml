@@ -5,8 +5,10 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: "cd backend && npm install && npx prisma generate && npm run build"
-    startCommand: "cd backend && npm start"
+    # CHANGED: Added --include=dev to install TypeScript for the build
+    buildCommand: cd backend && npm install --include=dev && npx prisma generate && npm run build
+    startCommand: cd backend && npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -18,11 +20,43 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
-      - key: COOKIE_SECRET
-        generateValue: true
+      - key: JWT_ACCESS_EXPIRY
+        value: 15m
+      - key: JWT_REFRESH_EXPIRY
+        value: 7d
+      - key: BCRYPT_ROUNDS
+        value: 12
+      - key: FRONTEND_URL
+        value: https://diaryrose-frontend.onrender.com
+      - key: API_URL
+        sync: false
       - key: PORT
         value: 5000
-    healthCheckPath: /health
+      - key: COOKIE_SECRET
+        generateValue: true
+      # ADDED: Missing variables required by your code
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_S3_BUCKET
+        sync: false
+      - key: AWS_S3_VIDEO_BUCKET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
 
   # Frontend
   - type: web

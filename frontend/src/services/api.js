@@ -1,4 +1,4 @@
-// src/services/api.ts
+// frontend/src/services/api.js
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
@@ -44,9 +44,12 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch (refreshError) {
+        // FIXED: Key name matches App.js ('currentUser') so logout actually works
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        localStorage.removeItem('currentUser'); 
+        
+        // FIXED: Redirects to root so App.js can show the login screen
+        window.location.href = '/'; 
         return Promise.reject(refreshError);
       }
     }

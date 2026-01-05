@@ -1,40 +1,18 @@
-// src/services/entriesService.ts
+// frontend/src/services/entriesService.js
 import api from './api';
 
-export interface CreateEntryData {
-  type: 'WRITTEN' | 'VIDEO';
-  title: string;
-  content?: string;
-  videoUrl?: string;
-  videoDuration?: number;
-  mood?: string;
-  privacy: 'PRIVATE' | 'PUBLIC';
-  location?: string;
-  locationCoords?: { lat: number; lng: number };
-  tags?: string[];
-  images?: string[];
-}
-
 export const entriesService = {
-  async createEntry(data: CreateEntryData) {
+  async createEntry(data) {
     const response = await api.post('/entries', data);
     return response.data;
   },
 
-  async getEntries(filters?: {
-    type?: 'WRITTEN' | 'VIDEO';
-    privacy?: 'PRIVATE' | 'PUBLIC';
-    mood?: string;
-    search?: string;
-    tags?: string[];
-    page?: number;
-    limit?: number;
-    sortBy?: 'newest' | 'oldest';
-  }) {
+  async getEntries(filters) {
     const params = new URLSearchParams();
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined) {
+        // FIXED: Added check for 'all' and null to prevent backend errors
+        if (value !== undefined && value !== null && value !== 'all') {
           if (Array.isArray(value)) {
             params.append(key, value.join(','));
           } else {
@@ -47,17 +25,17 @@ export const entriesService = {
     return response.data;
   },
 
-  async getEntry(id: string) {
+  async getEntry(id) {
     const response = await api.get(`/entries/${id}`);
     return response.data;
   },
 
-  async updateEntry(id: string, data: Partial<CreateEntryData>) {
+  async updateEntry(id, data) {
     const response = await api.patch(`/entries/${id}`, data);
     return response.data;
   },
 
-  async deleteEntry(id: string) {
+  async deleteEntry(id) {
     const response = await api.delete(`/entries/${id}`);
     return response.data;
   },
