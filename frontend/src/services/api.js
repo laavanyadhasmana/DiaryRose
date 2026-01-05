@@ -1,6 +1,9 @@
 // frontend/src/services/api.js
 import axios from 'axios';
 
+// DEBUG: This will show us exactly what Vercel is seeing
+console.log("DEBUG: VITE_API_URL is:", import.meta.env.VITE_API_URL);
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const api = axios.create({
   baseURL: API_URL,
