@@ -1,5 +1,5 @@
 // src/routes/upload.routes.ts
-import { Router } from 'express';
+import { Router, Response, NextFunction } from 'express'; // Fixed: Added Response, NextFunction
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { StorageService } from '../services/storage.service';
 import { uploadLimiter } from '../middleware/ratelimit.middleware';
@@ -19,7 +19,8 @@ router.post(
     body('fileType').notEmpty().withMessage('File type is required'),
     validate
   ],
-  async (req: AuthRequest, res, next) => {
+  // Fixed: Added explicit types for res and next
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { fileName, fileType } = req.body;
       
@@ -50,7 +51,8 @@ router.post(
     body('fileType').notEmpty().withMessage('File type is required'),
     validate
   ],
-  async (req: AuthRequest, res, next) => {
+  // Fixed: Added explicit types for res and next
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { fileName, fileType } = req.body;
       
@@ -72,4 +74,3 @@ router.post(
 );
 
 export default router;
-

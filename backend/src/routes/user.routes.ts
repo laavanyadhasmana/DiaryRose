@@ -1,5 +1,5 @@
 // src/routes/user.routes.ts
-import { Router } from 'express';
+import { Router, Response, NextFunction } from 'express'; // Fixed: Added types
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { PrismaClient } from '@prisma/client';
 import { body } from 'express-validator';
@@ -11,7 +11,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // Get current user
-router.get('/me', authenticate, async (req: AuthRequest, res, next) => {
+router.get('/me', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.id },
@@ -46,7 +46,7 @@ router.patch(
     body('avatarUrl').optional().isURL(),
     validate
   ],
-  async (req: AuthRequest, res, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { name, avatarUrl } = req.body;
 
@@ -86,7 +86,7 @@ router.patch(
       .withMessage('New password must be at least 6 characters'),
     validate
   ],
-  async (req: AuthRequest, res, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { currentPassword, newPassword } = req.body;
 
@@ -121,7 +121,7 @@ router.patch(
 router.patch(
   '/me/settings',
   authenticate,
-  async (req: AuthRequest, res, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const user = await prisma.user.update({
         where: { id: req.user!.id },
@@ -139,7 +139,7 @@ router.patch(
 );
 
 // Delete account
-router.delete('/me', authenticate, async (req: AuthRequest, res, next) => {
+router.delete('/me', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     // Soft delete all entries first
     await prisma.entry.updateMany({
@@ -162,4 +162,3 @@ router.delete('/me', authenticate, async (req: AuthRequest, res, next) => {
 });
 
 export default router;
-

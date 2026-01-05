@@ -1,7 +1,6 @@
-// src/services/auth.service.ts
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AppError } from '../utils/AppError';
 import { sendEmail } from './email.service';
@@ -129,7 +128,7 @@ export class AuthService {
       // Verify refresh token
       const decoded = jwt.verify(
         refreshToken,
-        process.env.JWT_REFRESH_SECRET!
+        process.env.JWT_REFRESH_SECRET as string
       ) as { userId: string };
 
       // Check if token exists in database
@@ -168,7 +167,6 @@ export class AuthService {
     });
 
     if (!user) {
-      // Don't reveal if user exists
       return { message: 'If email exists, password reset link has been sent' };
     }
 
@@ -231,18 +229,28 @@ export class AuthService {
   }
 
   private generateAccessToken(userId: string): string {
+    // FIXED: Cast 'expiresIn' to 'any' to bypass strict TS check
+    const options: jwt.SignOptions = {
+      expiresIn: (process.env.JWT_ACCESS_EXPIRY || '15m') as any
+    };
+    
     return jwt.sign(
       { userId },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m' }
+      process.env.JWT_SECRET as string,
+      options
     );
   }
 
   private async generateRefreshToken(userId: string): Promise<string> {
+    // FIXED: Cast 'expiresIn' to 'any' to bypass strict TS check
+    const options: jwt.SignOptions = {
+      expiresIn: (process.env.JWT_REFRESH_EXPIRY || '7d') as any
+    };
+
     const token = jwt.sign(
       { userId },
-      process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRY || '7d' }
+      process.env.JWT_REFRESH_SECRET as string,
+      options
     );
 
     // Store refresh token in database
@@ -257,4 +265,3 @@ export class AuthService {
     return token;
   }
 }
-
