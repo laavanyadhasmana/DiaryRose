@@ -7,36 +7,35 @@ interface EmailOptions {
   html: string;
 }
 
+// 1. Core function to send emails via Gmail
 export const sendEmail = async (options: EmailOptions) => {
-  // 1. Create the transporter using Gmail
   const transporter = nodemailer.createTransport({
-    service: 'gmail',  // Built-in Gmail support
+    service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER, // Your Gmail address
-      pass: process.env.EMAIL_PASS  // Your App Password
+      user: process.env.EMAIL_USER, // Your real Gmail address
+      pass: process.env.EMAIL_PASS  // Your 16-character App Password
     }
   });
 
-  // 2. Define email options
   const mailOptions = {
-    from: `"DiaryRose Support" <${process.env.EMAIL_USER}>`, // Shows as "DiaryRose Support" in inbox
+    from: `"DiaryRose Support" <${process.env.EMAIL_USER}>`,
     to: options.to,
     subject: options.subject,
     html: options.html
   };
 
-  // 3. Send the email
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully to ${options.to}`);
+    console.log(`✅ Email sent successfully to ${options.to}`);
   } catch (error) {
-    console.error('Error sending email:', error);
-    // We re-throw the error so the auth service knows it failed
+    console.error('❌ Error sending email:', error);
+    // Important: We THROW the error so auth.service.ts knows it failed
+    // (auth.service.ts will then catch it and log it without crashing)
     throw error;
   }
 };
 
-// Export class to match your existing Auth Service calls
+// 2. Class for specific email templates
 export class EmailService {
   async sendVerificationEmail(to: string, name: string, url: string) {
     await sendEmail({
