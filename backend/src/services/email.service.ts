@@ -1,29 +1,74 @@
+// backend/src/services/email.service.ts
 import nodemailer from 'nodemailer';
-import type Mail from 'nodemailer/lib/mailer';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER || 'apikey',
-    pass: process.env.SENDGRID_API_KEY || ''
-  }
-});
+interface EmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+}
 
-export async function sendEmail(options: Mail.Options) {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.log('⚠️  Email not configured, skipping send');
-    return;
-  }
+export const sendEmail = async (options: EmailOptions) => {
+  // 1. Create the transporter using Gmail
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',  // Built-in Gmail support
+    auth: {
+      user: process.env.EMAIL_USER, // Your Gmail address
+      pass: process.env.EMAIL_PASS  // Your App Password
+    }
+  });
 
+  // 2. Define email options
+  const mailOptions = {
+    from: `"DiaryRose Support" <${process.env.EMAIL_USER}>`, // Shows as "DiaryRose Support" in inbox
+    to: options.to,
+    subject: options.subject,
+    html: options.html
+  };
+
+  // 3. Send the email
   try {
-    await transporter.sendMail({
-      from: `${process.env.EMAIL_FROM_NAME || 'DiaryRose'} <${process.env.EMAIL_FROM || 'noreply@diaryrose.com'}>`,
-      ...options
-    });
-    console.log('✅ Email sent successfully');
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent successfully to ${options.to}`);
   } catch (error) {
-    console.error('❌ Error sending email:', error);
+    console.error('Error sending email:', error);
+    // We re-throw the error so the auth service knows it failed
+    throw error;
+  }
+};
+
+// Export class to match your existing Auth Service calls
+export class EmailService {
+  async sendVerificationEmail(to: string, name: string, url: string) {
+    await sendEmail({
+      to,
+      subject: 'Verify your DiaryRose Email',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #4f46e5;">Welcome to DiaryRose, ${name}!</h2>
+          <p>Please verify your email address to secure your account.</p>
+          <div style="margin: 20px 0;">
+            <a href="${url}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Verify Email</a>
+          </div>
+          <p style="color: #666; font-size: 14px;">Or paste this link in your browser: <br/>${url}</p>
+        </div>
+      `
+    });
+  }
+
+  async sendPasswordResetEmail(to: string, name: string, url: string) {
+    await sendEmail({
+      to,
+      subject: 'Reset your DiaryRose Password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2>Hello ${name},</h2>
+          <p>You requested a password reset. Click the button below to choose a new password.</p>
+          <div style="margin: 20px 0;">
+            <a href="${url}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Reset Password</a>
+          </div>
+          <p>This link expires in 10 minutes.</p>
+        </div>
+      `
+    });
   }
 }
