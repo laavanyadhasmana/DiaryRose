@@ -47,18 +47,21 @@ export class AuthService {
     });
 
     // Send verification email
-    await sendEmail({
-      to: email,
-      subject: 'Verify your email',
-      html: `
-        <h1>Welcome to DiaryRose!</h1>
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="${process.env.FRONTEND_URL}/verify-email/${verificationToken}">
-          Verify Email
-        </a>
-      `
-    });
-
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Verify your email',
+        html: `
+          <h1>Welcome to DiaryRose!</h1>
+          <p>Please verify your email by clicking the link below:</p>
+          <a href="${process.env.FRONTEND_URL}/verify-email/${verificationToken}">
+            Verify Email
+          </a>
+        `
+      });
+    } catch (error) {
+      console.log("Email failed to send (Skipping):", error);
+    }
     return user;
   }
 
