@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "postinstall": "npx prisma generate"
   },
   "keywords": [],
   "author": "",
@@ -51,7 +52,7 @@
     "tsx": "^4.7.0",
     "prisma": "^5.8.0"
   },
-    "engines": {
+  "engines": {
     "node": ">=18.0.0"
   }
 }

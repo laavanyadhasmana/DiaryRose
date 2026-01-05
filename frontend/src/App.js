@@ -1,3 +1,5 @@
+
+console.log('API URL:', process.env.REACT_APP_API_URL);
 import React, { useState, useRef, useEffect } from "react";
 import {
   Camera, Edit, Calendar, Search, Video, FileText, Plus, X, Play, Trash2, Lock,

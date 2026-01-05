@@ -1,16 +1,16 @@
-  // src/middleware/validation.middleware.ts
-  import { validationResult } from 'express-validator';
+// src/middleware/validation.middleware.ts
+import { Request, Response, NextFunction } from 'express';
+import { validationResult } from 'express-validator';
+
+export const validate = (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
   
-  export const validate = (req: Request, res: Response, next: NextFunction) => {
-    const errors = validationResult(req);
-    
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        status: 'error',
-        errors: errors.array()
-      });
-    }
-    
-    next();
-  };
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: 'error',
+      errors: errors.array()
+    });
+  }
   
+  next();
+};
