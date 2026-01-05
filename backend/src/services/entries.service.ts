@@ -6,7 +6,8 @@ import { StorageService } from './storage.service';
 const prisma = new PrismaClient();
 const storageService = new StorageService();
 
-interface CreateEntryData {
+// CHANGE HERE: Added 'export' so the controller can use this interface
+export interface CreateEntryData {
   type: EntryType;
   title: string;
   content?: string;
@@ -262,10 +263,14 @@ export class EntriesService {
       wordCount = data.content.trim().split(/\s+/).length;
     }
 
+    // 1. EXTRACT tags and images so they don't crash the update function
+    const { tags, images, ...entryData } = data;
+
+    // 2. Update the simple fields (using entryData)
     const updated = await prisma.entry.update({
       where: { id: entryId },
       data: {
-        ...data,
+        ...entryData, // This is safe now because tags/images are removed
         wordCount,
         updatedAt: new Date()
       },
@@ -281,15 +286,15 @@ export class EntriesService {
       }
     });
 
-    // Update tags if provided
-    if (data.tags) {
+    // 3. Update tags manually (This preserves your existing tag logic!)
+    if (tags) {
       // Remove existing tags
       await prisma.entryTag.deleteMany({
         where: { entryId }
       });
 
       // Add new tags
-      for (const tagName of data.tags) {
+      for (const tagName of tags) {
         let tag = await prisma.tag.findFirst({
           where: { userId, name: tagName }
         });
@@ -307,6 +312,27 @@ export class EntriesService {
           }
         });
       }
+    }
+
+    // 4. Update images manually (This logic was missing, I added it for you so images update correctly too)
+    if (images) {
+      // Remove existing images
+      await prisma.entryImage.deleteMany({
+        where: { entryId }
+      });
+
+      // Add new images
+      await Promise.all(
+        images.map((imageUrl, index) =>
+          prisma.entryImage.create({
+            data: {
+              entryId,
+              imageUrl,
+              orderIndex: index
+            }
+          })
+        )
+      );
     }
 
     return this.formatEntry(updated);
@@ -464,4 +490,3 @@ export class EntriesService {
     };
   }
 }
-
