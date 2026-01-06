@@ -170,15 +170,22 @@ export default function DiaryApp() {
   const handleSignup = async () => {
     if (!authName || !authEmail || !authPassword) return alert("Please fill in all fields");
     try {
-        const response = await authService.register({ name: authName, email: authEmail, password: authPassword });
-        const { user, accessToken } = response.data;
-
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("currentUser", JSON.stringify(user));
-
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-        addNotification("Account created!", "success");
+        const response = await authService.register({ 
+          name: authName, 
+          email: authEmail, 
+          password: authPassword 
+        });
+        
+        // Show success message
+        alert(response.message || "Account created! Please check your email to verify your account.");
+        
+        // Switch to login mode
+        setAuthMode("login");
+        setAuthEmail(""); // Clear email field
+        setAuthPassword(""); // Clear password field
+        setAuthName(""); // Clear name field
+        
+        addNotification("Registration successful! Please login.", "success");
     } catch (error) {
         alert(error.response?.data?.message || "Signup failed");
     }
