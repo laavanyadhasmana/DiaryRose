@@ -1,10 +1,17 @@
 // frontend/src/services/api.js
+// CORRECT for Vite deployment
+
 import axios from 'axios';
 
-// DEBUG: This will show us exactly what Vercel is seeing
-console.log("DEBUG: VITE_API_URL is:", import.meta.env.VITE_API_URL);
+// ✅ For Vite: import.meta.env is correct
+// ✅ Added fallback chain for better debugging
+const API_URL = import.meta.env.VITE_API_URL || 
+                import.meta.env.VITE_API_BASE_URL || 
+                'http://localhost:5001/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+console.log("🔗 API URL configured as:", API_URL);
+console.log("🔍 All env vars:", import.meta.env);
+
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
@@ -46,11 +53,9 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch (refreshError) {
-        // FIXED: Key name matches App.js ('currentUser') so logout actually works
         localStorage.removeItem('accessToken');
         localStorage.removeItem('currentUser'); 
         
-        // FIXED: Redirects to root so App.js can show the login screen
         window.location.href = '/'; 
         return Promise.reject(refreshError);
       }
