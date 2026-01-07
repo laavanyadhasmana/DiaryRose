@@ -167,29 +167,38 @@ export default function DiaryApp() {
     }
   };
 
-  const handleSignup = async () => {
-    if (!authName || !authEmail || !authPassword) return alert("Please fill in all fields");
-    try {
-        const response = await authService.register({ 
-          name: authName, 
-          email: authEmail, 
-          password: authPassword 
-        });
-        
-        // Show success message
-        alert(response.message || "Account created! Please check your email to verify your account.");
-        
-        // Switch to login mode
-        setAuthMode("login");
-        setAuthEmail(""); // Clear email field
-        setAuthPassword(""); // Clear password field
-        setAuthName(""); // Clear name field
-        
-        addNotification("Registration successful! Please login.", "success");
-    } catch (error) {
-        alert(error.response?.data?.message || "Signup failed");
-    }
-  };
+const handleSignup = async () => {
+  if (!authName || !authEmail || !authPassword) {
+    alert("Please fill in all fields");
+    return;
+  }
+  
+  try {
+    const response = await authService.register({ 
+      name: authName, 
+      email: authEmail, 
+      password: authPassword 
+    });
+    
+    // Show success message from backend
+    alert(response.message || "Account created! Please check your email to verify your account.");
+    
+    // Clear all form fields
+    setAuthName("");
+    setAuthEmail("");
+    setAuthPassword("");
+    
+    // Switch to login mode so user can login after verifying email
+    setAuthMode("login");
+    
+    // Show notification
+    addNotification("Registration successful! Please verify your email, then login.", "success");
+    
+  } catch (error) {
+    console.error("Signup error:", error);
+    alert(error.response?.data?.message || "Signup failed. Please try again.");
+  }
+};
 
   const handleLogout = () => {
     if (window.confirm("Logout?")) {
